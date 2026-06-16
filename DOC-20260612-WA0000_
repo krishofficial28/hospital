@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MediAI Hospital System</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F6FBF8;--card:#FFFFFF;--input:#EFF8F2;--accent:#1B7F4C;--accent2:#54B488;
+  --danger:#D6473E;--warn:#D99A2B;--text:#16261E;--muted:#7C9286;--border:#DFEEE6;
+  --r:12px;--sidebar:264px;--font-display:'Poppins',sans-serif;--font-body:'Inter','Segoe UI',sans-serif;--font-mono:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;line-height:1.5}
+a{color:var(--accent);text-decoration:none}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+/* ── Layout ── */
+#app{display:flex;min-height:100vh}
+#sidebar{width:var(--sidebar);background:var(--card);border-right:1px solid var(--border);
+  padding:1.2rem 1rem;display:flex;flex-direction:column;gap:.8rem;position:fixed;
+  top:0;left:0;height:100vh;overflow-y:auto;z-index:100;transition:transform .3s}
+#main{margin-left:var(--sidebar);flex:1;padding:1.5rem 2rem;max-width:1400px}
+@media(max-width:768px){
+  #sidebar{transform:translateX(-100%)}
+  #sidebar.open{transform:translateX(0)}
+  #main{margin-left:0;padding:1rem}
+}
+
+/* ── Login ── */
+#login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem;
+  background:radial-gradient(circle at 30% 20%,#E4F7EC 0%,#F6FBF8 55%)}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:18px;
+  padding:2.5rem 2rem;width:100%;max-width:400px;text-align:center;box-shadow:0 12px 36px rgba(27,127,76,.1)}
+.login-box h2{font-family:var(--font-display);font-size:1.55rem;font-weight:700;margin:.5rem 0 .2rem;letter-spacing:-.01em}
+.login-box p{color:var(--muted);font-size:.85rem;margin-bottom:1.5rem}
+
+/* ── Inputs ── */
+input,select,textarea{
+  width:100%;background:var(--input);color:var(--text);border:1.5px solid var(--border);
+  border-radius:8px;padding:.55rem .9rem;font-size:.9rem;outline:none;font-family:inherit;
+  transition:border-color .15s,box-shadow .15s
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(27,127,76,.12)}
+input::placeholder,textarea::placeholder{color:var(--muted)}
+label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:.3rem;font-weight:500}
+.field{margin-bottom:1rem}
+
+/* ── Buttons ── */
+.btn{
+  background:linear-gradient(135deg,var(--accent),#3FBE7A);color:#fff;border:none;
+  border-radius:8px;padding:.6rem 1.4rem;font-size:.88rem;font-weight:600;font-family:inherit;
+  cursor:pointer;transition:opacity .15s,transform .1s,box-shadow .15s;width:100%
+}
+.btn:hover{opacity:.92;transform:translateY(-1px);box-shadow:0 4px 12px rgba(27,127,76,.25)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-sm{padding:.4rem .9rem;font-size:.8rem;width:auto}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text)}
+.btn-outline:hover{background:var(--input);box-shadow:none;border-color:var(--accent2)}
+.btn-danger{background:var(--danger)}
+.btn-success{background:var(--accent2)}
+
+/* ── Cards & sections ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.2rem 1.4rem;margin-bottom:1rem;box-shadow:0 1px 4px rgba(27,127,76,.05)}
+.hdr{background:linear-gradient(120deg,#E4F7EC 0%,#D3EFE0 60%,#C7ECD8 100%);border-radius:16px;
+  padding:1.5rem 2rem;margin-bottom:1.2rem;border:1px solid var(--border);
+  display:flex;align-items:center;gap:1.2rem;position:relative;overflow:hidden}
+.hdr h1{font-family:var(--font-display);color:var(--text);font-size:1.7rem;font-weight:800;letter-spacing:-.02em}
+.hdr p{color:var(--muted);font-size:.85rem;margin-top:.2rem;font-weight:500}
+.hdr-icon{font-size:2.4rem;flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(27,127,76,.2))}
+.hdr-pulse{position:absolute;bottom:0;left:0;width:100%;height:34px;opacity:.35;pointer-events:none}
+.badge{background:rgba(84,180,136,.18);color:#1B7F4C;border-radius:20px;
+  padding:.3rem 1rem;font-size:.75rem;font-weight:700;margin-left:auto;display:flex;align-items:center;gap:.4rem;
+  letter-spacing:.03em;white-space:nowrap}
+.badge-dot{width:8px;height:8px;border-radius:50%;background:#1B7F4C;display:inline-block;animation:pulse-dot 1.8s ease-in-out infinite}
+@keyframes pulse-dot{0%,100%{box-shadow:0 0 0 0 rgba(27,127,76,.5)}50%{box-shadow:0 0 0 5px rgba(27,127,76,0)}}
+
+/* ── KPI cards ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.8rem;margin-bottom:1.2rem}
+.kpi{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--accent2);border-radius:var(--r);padding:1rem 1.2rem;
+  transition:transform .18s ease,box-shadow .18s ease;cursor:default}
+.kpi:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(27,127,76,.15)}
+.kpi.kpi-danger{border-left-color:var(--danger)}
+.kpi.kpi-warn{border-left-color:var(--warn)}
+.kpi-label{color:var(--muted);font-size:.74rem;margin-bottom:.35rem;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.kpi-val{font-family:var(--font-display);font-size:1.9rem;font-weight:700;letter-spacing:-.02em}
+
+/* ── Tabs ── */
+.tabs{display:flex;flex-wrap:wrap;gap:.25rem;margin-bottom:1.2rem;border-bottom:1.5px solid var(--border);padding-bottom:0}
+.tab{background:transparent;border:none;color:var(--muted);padding:.6rem 1rem;border-radius:8px 8px 0 0;
+  font-size:.85rem;font-weight:600;cursor:pointer;transition:color .15s,background .15s;white-space:nowrap;
+  border-bottom:2.5px solid transparent;margin-bottom:-1.5px}
+.tab:hover{color:var(--text);background:var(--input)}
+.tab.active{background:transparent;color:var(--accent);border-bottom-color:var(--accent)}
+.pane{display:none}.pane.active{display:block;animation:fade-in .25s ease}
+@keyframes fade-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Sidebar nav ── */
+.nav-btn{width:100%;text-align:left;background:transparent;border:none;border-left:3px solid transparent;color:var(--muted);
+  padding:.6rem .8rem;border-radius:8px;font-size:.85rem;font-weight:500;cursor:pointer;transition:all .15s;
+  display:flex;align-items:center;gap:.6rem}
+.nav-btn:hover{background:var(--input);color:var(--text)}
+.nav-btn.active{background:rgba(84,180,136,.14);color:var(--accent);border-left-color:var(--accent);font-weight:600}
+.nav-sep{border:none;border-top:1px solid var(--border);margin:.4rem 0}
+.stat-mini{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin:.6rem 0}
+.stat-mini-box{background:var(--input);border-radius:8px;padding:.5rem .6rem;text-align:center;transition:transform .15s}
+.stat-mini-box:hover{transform:translateY(-1px)}
+.stat-mini-box .v{font-family:var(--font-display);font-size:1.15rem;font-weight:700}
+.stat-mini-box .l{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+
+/* ── Table ── */
+.tbl{width:100%;border-collapse:collapse;font-size:.83rem}
+.tbl th{background:var(--input);color:var(--accent);text-align:left;padding:.6rem .8rem;font-size:.78rem;letter-spacing:.5px}
+.tbl td{padding:.6rem .8rem;border-bottom:1px solid var(--border)}
+.tbl tr:hover td{background:rgba(46,158,91,.06)}
+.tbl-wrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--border)}
+
+/* ── Alerts ── */
+.alert-high{background:#FDEAEA;border:1px solid var(--danger);border-radius:var(--r);padding:.8rem 1.1rem;margin:.4rem 0;font-size:.85rem;color:#7A2E2E}
+.alert-medium{background:#FCF2E0;border:1px solid var(--warn);border-radius:var(--r);padding:.8rem 1.1rem;margin:.4rem 0;font-size:.85rem;color:#7A5A1E}
+.alert-low{background:#E6F7ED;border:1px solid var(--accent2);border-radius:var(--r);padding:.8rem 1.1rem;margin:.4rem 0;font-size:.85rem;color:#1F5C3C}
+.alert-info{background:rgba(46,158,91,.08);border:1px solid var(--accent);border-radius:var(--r);padding:.8rem 1.1rem;margin:.4rem 0;font-size:.85rem;color:#1F5C3C}
+
+/* ── Chat ── */
+.chat-box{height:340px;overflow-y:auto;background:var(--input);border-radius:var(--r);padding:1rem;margin-bottom:.8rem;display:flex;flex-direction:column;gap:.6rem;scroll-behavior:smooth}
+.chat-user{background:rgba(27,127,76,.12);color:var(--text);border-radius:14px 14px 3px 14px;padding:.55rem .95rem;align-self:flex-end;max-width:80%;font-size:.85rem;animation:fade-in .2s ease}
+.chat-bot{background:var(--card);border:1px solid var(--border);border-radius:14px 14px 14px 3px;padding:.55rem .95rem;align-self:flex-start;max-width:80%;font-size:.85rem;animation:fade-in .2s ease;box-shadow:0 1px 3px rgba(27,127,76,.05)}
+
+/* ── Grid util ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+@media(max-width:640px){.g2,.g3{grid-template-columns:1fr}}
+
+/* ── Misc ── */
+.chip{display:inline-block;padding:.2rem .6rem;border-radius:20px;font-size:.72rem;font-weight:600}
+.chip-high{background:#FDEAEA;color:var(--danger)}
+.chip-medium{background:#FCF2E0;color:var(--warn)}
+.chip-low{background:#E6F7ED;color:#1F8A53}
+.chip-admitted{background:rgba(46,158,91,.12);color:var(--accent)}
+.chip-discharged{background:rgba(95,191,143,.18);color:#1F8A53}
+.text-muted{color:var(--muted)}
+.text-accent{color:var(--accent)}
+.text-success{color:var(--accent2)}
+.text-danger{color:var(--danger)}
+.mt-1{margin-top:1rem}.mb-1{margin-bottom:1rem}.mb-05{margin-bottom:.5rem}
+h3{font-family:var(--font-display);font-size:1.02rem;font-weight:600;margin-bottom:.8rem;letter-spacing:-.01em}
+h2{font-family:var(--font-display);font-size:1.35rem;font-weight:700;margin-bottom:1rem;letter-spacing:-.015em}
+hr{border:none;border-top:1px solid var(--border);margin:1.2rem 0}
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--card);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--r);padding:.8rem 1.2rem;z-index:9999;font-size:.85rem;font-weight:500;opacity:0;transform:translateY(10px);transition:all .3s;box-shadow:0 8px 24px rgba(27,127,76,.15)}
+.toast.show{opacity:1;transform:translateY(0)}
+#mob-toggle{display:none;position:fixed;top:1rem;left:1rem;z-index:200;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.4rem .7rem;cursor:pointer;color:var(--text);font-size:1.1rem}
+@media(max-width:768px){#mob-toggle{display:block}}
+</style>
+</head>
+<body>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<!-- Mobile toggle -->
+<button id="mob-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+
+<!-- LOGIN -->
+<div id="login-wrap">
+<div class="login-box">
+  <div style="font-size:3rem">🏥</div>
+  <h2>MediAI Login</h2>
+  <p>Secure access to Hospital Management System</p>
+  <div class="field"><label>👤 Username</label><input id="uname" placeholder="arjun / admin / nurse" autocomplete="username"/></div>
+  <div class="field"><label>🔒 Password</label><input id="upwd" type="password" placeholder="••••••••" autocomplete="current-password"/></div>
+  <div class="field" style="text-align:left"><small class="text-muted">Login: arjun:670798 &nbsp;|&nbsp; admin:admin1234 &nbsp;|&nbsp; nurse:nurse123</small></div>
+  <div id="login-err" style="color:var(--danger);font-size:.82rem;margin-bottom:.6rem;display:none">❌ Invalid credentials</div>
+  <button class="btn" onclick="doLogin()">🔐 Sign In</button>
+</div>
+</div>
+
+<!-- APP SHELL (hidden until login) -->
+<div id="app" style="display:none">
+
+<!-- Sidebar -->
+<div id="sidebar">
+  <div class="card" style="text-align:center;padding:1rem">
+    <div id="sb-icon" style="font-size:2rem">👩‍💼</div>
+    <div id="sb-name" style="font-weight:700;margin:.3rem 0"></div>
+    <div id="sb-role" style="color:var(--accent2);font-size:.72rem;text-transform:uppercase;letter-spacing:1px"></div>
+  </div>
+  <div>
+    <div class="text-muted" style="font-size:.72rem;padding:0 .4rem;margin-bottom:.4rem">📊 QUICK STATS</div>
+    <div class="stat-mini" id="sb-stats"></div>
+  </div>
+  <hr/>
+  <nav id="sb-nav"></nav>
+  <hr/>
+  <div class="text-muted" style="font-size:.78rem;padding:.2rem .4rem" id="sb-time"></div>
+  <button class="btn btn-outline" style="margin-top:.4rem" onclick="doLogout()">🚪 Logout</button>
+</div>
+
+<!-- Main content -->
+<div id="main">
+  <!-- Header banner -->
+  <div class="hdr">
+    <span class="hdr-icon">🏥</span>
+    <div>
+      <h1>MediAI Hospital System</h1>
+      <p>AI-powered disease prediction &amp; intelligent bed management</p>
+    </div>
+    <div class="badge"><span class="badge-dot"></span> System online</div>
+    <svg class="hdr-pulse" viewBox="0 0 600 40" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0,20 L60,20 L75,8 L90,32 L105,20 L160,20 L175,12 L190,28 L205,20 L600,20"
+        fill="none" stroke="#1B7F4C" stroke-width="2"/>
+    </svg>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs" id="tabs"></div>
+
+  <!-- Panes -->
+  <div id="pane-overview" class="pane active"></div>
+  <div id="pane-prediction" class="pane"></div>
+  <div id="pane-patients" class="pane"></div>
+  <div id="pane-beds" class="pane"></div>
+  <div id="pane-analytics" class="pane"></div>
+  <div id="pane-history" class="pane"></div>
+  <div id="pane-chatbot" class="pane"></div>
+  <div id="pane-database" class="pane"></div>
+</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+const USERS = {
+  arjun: {pw:'670798', role:'doctor', name:'Dr. Arjun'},
+  admin: {pw:'admin1234', role:'admin', name:'Dr. Admin'},
+  nurse: {pw:'nurse123', role:'nurse', name:'Nurse Priya'},
+};
+
+let state = {
+  user: null,
+  patients: JSON.parse(localStorage.getItem('mediai_patients')||'[]'),
+  predictions: JSON.parse(localStorage.getItem('mediai_predictions')||'[]'),
+  chatHistory: [{role:'bot',msg:"Hello! 👋 I'm MedBot — your AI medical assistant. Ask me about diseases, symptoms, or bed status."}],
+  activePane: 'overview',
+  charts: {},
+};
+
+const BED_CAP = {ICU:20, Emergency:30, General:100};
+
+// ═══════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════
+function save(){
+  localStorage.setItem('mediai_patients', JSON.stringify(state.patients));
+  localStorage.setItem('mediai_predictions', JSON.stringify(state.predictions));
+}
+
+function toast(msg, type='info'){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderColor = type==='success'?'var(--accent2)':type==='error'?'var(--danger)':'var(--accent)';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+function getStats(){
+  const p = state.patients;
+  return {
+    total: p.length,
+    admitted: p.filter(x=>x.status==='Admitted').length,
+    discharged: p.filter(x=>x.status==='Discharged').length,
+    critical: p.filter(x=>x.status==='Critical').length,
+    highRisk: p.filter(x=>x.risk==='High').length,
+  };
+}
+
+function getBeds(){
+  const occupied = {ICU:0, Emergency:0, General:0};
+  state.patients.filter(p=>['Admitted','Critical','Stable'].includes(p.status))
+    .forEach(p=>{ if(occupied[p.bedType]!==undefined) occupied[p.bedType]++; });
+  const r = {};
+  for(const [k,cap] of Object.entries(BED_CAP)){
+    const occ = Math.min(occupied[k], cap);
+    r[k] = {cap, occ, avail:cap-occ, pct:Math.round(occ/cap*100)};
+  }
+  return r;
+}
+
+function newId(prefix,arr){ return prefix+(arr.length+1).toString().padStart(4,'0'); }
+function now(){ return new Date().toLocaleString('en-IN'); }
+
+// ═══════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════
+function doLogin(){
+  const u = document.getElementById('uname').value.trim().toLowerCase();
+  const p = document.getElementById('upwd').value;
+  const user = USERS[u];
+  if(user && user.pw === p){
+    state.user = {...user, username:u};
+    document.getElementById('login-wrap').style.display='none';
+    document.getElementById('app').style.display='flex';
+    document.getElementById('login-err').style.display='none';
+    initApp();
+  } else {
+    document.getElementById('login-err').style.display='block';
+  }
+}
+
+document.getElementById('upwd').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+
+function doLogout(){
+  state.user=null;
+  document.getElementById('login-wrap').style.display='flex';
+  document.getElementById('app').style.display='none';
+  document.getElementById('uname').value='';
+  document.getElementById('upwd').value='';
+}
+
+// ═══════════════════════════════════════
+// APP INIT
+// ═══════════════════════════════════════
+function initApp(){
+  // Sidebar user info
+  const icons = {admin:'👩‍💼', doctor:'🧑‍⚕️', nurse:'👩‍⚕️'};
+  document.getElementById('sb-icon').textContent = icons[state.user.role]||'👤';
+  document.getElementById('sb-name').textContent = state.user.name;
+  document.getElementById('sb-role').textContent = state.user.role;
+
+  // Time ticker
+  const tick=()=>{ document.getElementById('sb-time').textContent='🕐 '+new Date().toLocaleTimeString('en-IN'); };
+  tick(); setInterval(tick, 1000);
+
+  // Tabs
+  const tabDefs=[
+    {id:'overview',label:'🏠 Overview'},
+    {id:'prediction',label:'🔬 Prediction'},
+    {id:'patients',label:'👥 Patients'},
+    {id:'beds',label:'🛏️ Beds'},
+    {id:'analytics',label:'📈 Analytics'},
+    {id:'history',label:'📋 History'},
+    {id:'chatbot',label:'🤖 MedBot'},
+    {id:'database',label:'🗄️ Database'},
+  ];
+  const tabsEl = document.getElementById('tabs');
+  tabsEl.innerHTML = tabDefs.map(t=>`<button class="tab${t.id===state.activePane?' active':''}" onclick="switchPane('${t.id}')">${t.label}</button>`).join('');
+
+  // Sidebar nav
+  document.getElementById('sb-nav').innerHTML = tabDefs.map(t=>`<button class="nav-btn${t.id===state.activePane?' active':''}" onclick="switchPane('${t.id}')">${t.label}</button>`).join('');
+
+  refreshAll();
+}
+
+function switchPane(id){
+  state.activePane = id;
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pane-'+id).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.classList.toggle('active', t.textContent.includes(id.charAt(0).toUpperCase()+id.slice(1)));
+  });
+  document.querySelectorAll('.nav-btn').forEach(b=>{
+    b.classList.toggle('active', b.textContent.toLowerCase().includes(id));
+  });
+  // Close mobile sidebar
+  document.getElementById('sidebar').classList.remove('open');
+  renderPane(id);
+}
+
+function refreshAll(){
+  updateSidebarStats();
+  renderPane(state.activePane);
+}
+
+function updateSidebarStats(){
+  const s = getStats();
+  document.getElementById('sb-stats').innerHTML=`
+    <div class="stat-mini-box"><div class="v">${s.total}</div><div class="l">Total</div></div>
+    <div class="stat-mini-box"><div class="v">${s.admitted}</div><div class="l">Admitted</div></div>
+    <div class="stat-mini-box"><div class="v" style="color:var(--danger)">${s.critical}</div><div class="l">Critical</div></div>
+    <div class="stat-mini-box"><div class="v" style="color:var(--warn)">${s.highRisk}</div><div class="l">High Risk</div></div>
+  `;
+}
+
+function renderPane(id){
+  const el = document.getElementById('pane-'+id);
+  switch(id){
+    case 'overview':   renderOverview(el); break;
+    case 'prediction': renderPrediction(el); break;
+    case 'patients':   renderPatients(el); break;
+    case 'beds':       renderBeds(el); break;
+    case 'analytics':  renderAnalytics(el); break;
+    case 'history':    renderHistory(el); break;
+    case 'chatbot':    renderChatbot(el); break;
+    case 'database':   renderDatabase(el); break;
+  }
+}
+
+// ═══════════════════════════════════════
+// PANE: OVERVIEW
+// ═══════════════════════════════════════
+function renderOverview(el){
+  const s = getStats();
+  const beds = getBeds();
+  const diagCount = {};
+  state.patients.forEach(p=>{ if(p.diagnosis) diagCount[p.diagnosis]=(diagCount[p.diagnosis]||0)+1; });
+  const riskCount = {High:0,Medium:0,Low:0};
+  state.patients.forEach(p=>{ if(p.risk) riskCount[p.risk]=(riskCount[p.risk]||0)+1; });
+
+  el.innerHTML=`
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">🏥 Total Patients</div><div class="kpi-val">${s.total}</div></div>
+      <div class="kpi"><div class="kpi-label">🛏️ Admitted</div><div class="kpi-val">${s.admitted}</div></div>
+      <div class="kpi"><div class="kpi-label">🏠 Discharged</div><div class="kpi-val">${s.discharged}</div></div>
+      <div class="kpi kpi-danger"><div class="kpi-label">🚨 Critical</div><div class="kpi-val" style="color:var(--danger)">${s.critical}</div></div>
+      <div class="kpi kpi-warn"><div class="kpi-label">⚠️ High Risk</div><div class="kpi-val" style="color:var(--warn)">${s.highRisk}</div></div>
+    </div>
+    <hr/>
+    <h3>🛏️ Real-Time Bed Occupancy</h3>
+    <div class="g3">
+      ${Object.entries(beds).map(([k,d])=>{
+        const pct=d.pct; const color=pct>=80?'var(--danger)':pct>=50?'var(--warn)':'var(--accent2)';
+        return `<div class="card">
+          <div style="font-weight:700;margin-bottom:.6rem">${k}</div>
+          <div style="display:flex;justify-content:space-between;font-size:.82rem;color:var(--muted);margin-bottom:.4rem">
+            <span>${d.occ} / ${d.cap} occupied</span><span style="color:${color}">${pct}%</span>
+          </div>
+          <div style="background:var(--input);border-radius:6px;height:10px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${color};border-radius:6px;transition:width .5s"></div>
+          </div>
+          <div style="font-size:.78rem;color:var(--accent2);margin-top:.4rem">✅ ${d.avail} available</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <hr/>
+    <div class="g2">
+      <div class="card">
+        <h3>🩺 Diagnosis Distribution</h3>
+        <div style="position:relative;height:220px"><canvas id="diagChart" role="img" aria-label="Diagnosis distribution pie chart">${Object.entries(diagCount).map(([k,v])=>k+': '+v).join(', ')||'No data'}</canvas></div>
+      </div>
+      <div class="card">
+        <h3>⚠️ Risk Level Distribution</h3>
+        <div style="position:relative;height:220px"><canvas id="riskChart" role="img" aria-label="Risk level bar chart">High: ${riskCount.High}, Medium: ${riskCount.Medium}, Low: ${riskCount.Low}</canvas></div>
+      </div>
+    </div>
+  `;
+
+  // Render charts after DOM is set
+  setTimeout(()=>{
+    destroyChart('diagChart');
+    if(Object.keys(diagCount).length){
+      state.charts['diagChart'] = new Chart(document.getElementById('diagChart'),{
+        type:'doughnut',
+        data:{labels:Object.keys(diagCount),datasets:[{data:Object.values(diagCount),
+          backgroundColor:['#1B7F4C','#54B488','#D6473E','#D99A2B','#3FBE7A','#8BD9B5'],
+          borderColor:'#FFFFFF',borderWidth:2}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#16261E',font:{size:11}}}}}
+      });
+    }
+    destroyChart('riskChart');
+    state.charts['riskChart'] = new Chart(document.getElementById('riskChart'),{
+      type:'bar',
+      data:{labels:['High','Medium','Low'],datasets:[{data:[riskCount.High,riskCount.Medium,riskCount.Low],
+        backgroundColor:['#D6473E','#D99A2B','#54B488']}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{x:{ticks:{color:'#7C9286'}},y:{ticks:{color:'#7C9286'},grid:{color:'#DFEEE6'}}}}
+    });
+  },50);
+}
+
+function destroyChart(id){
+  if(state.charts[id]){ state.charts[id].destroy(); delete state.charts[id]; }
+}
+
+// ═══════════════════════════════════════
+// PANE: PREDICTION  (AI via Anthropic API)
+// ═══════════════════════════════════════
+const DISEASE_FIELDS = {
+  Diabetes:[
+    {k:'Pregnancies',l:'Pregnancies',min:0,max:17,def:3},
+    {k:'Glucose',l:'Glucose (mg/dL)',min:44,max:200,def:120},
+    {k:'BloodPressure',l:'Blood Pressure',min:24,max:122,def:72},
+    {k:'SkinThickness',l:'Skin Thickness',min:7,max:63,def:29},
+    {k:'Insulin',l:'Insulin (μU/mL)',min:14,max:850,def:80},
+    {k:'BMI',l:'BMI',min:18,max:67,def:32,step:0.1},
+    {k:'DiabetesPedigreeFunction',l:'Pedigree Function',min:0.08,max:2.42,def:0.47,step:0.001},
+    {k:'Age',l:'Age',min:21,max:81,def:35},
+  ],
+  'Heart Disease':[
+    {k:'age',l:'Age',min:29,max:77,def:52},
+    {k:'sex',l:'Sex (0=F,1=M)',min:0,max:1,def:1},
+    {k:'cp',l:'Chest Pain (0-3)',min:0,max:3,def:1},
+    {k:'trestbps',l:'Resting BP',min:94,max:200,def:130},
+    {k:'chol',l:'Cholesterol',min:126,max:564,def:246},
+    {k:'fbs',l:'Fasting BS>120 (0/1)',min:0,max:1,def:0},
+    {k:'restecg',l:'Rest ECG (0-2)',min:0,max:2,def:1},
+    {k:'thalach',l:'Max Heart Rate',min:71,max:202,def:150},
+    {k:'exang',l:'Exercise Angina (0/1)',min:0,max:1,def:0},
+    {k:'oldpeak',l:'ST Depression',min:0,max:6.2,def:1,step:0.1},
+    {k:'slope',l:'Slope (0-2)',min:0,max:2,def:1},
+    {k:'ca',l:'Major Vessels (0-4)',min:0,max:4,def:0},
+    {k:'thal',l:'Thal (0-3)',min:0,max:3,def:2},
+  ],
+  'Kidney Disease':[
+    {k:'age',l:'Age',min:2,max:90,def:45},
+    {k:'bp',l:'Blood Pressure',min:50,max:180,def:76},
+    {k:'sg',l:'Specific Gravity (×1000)',min:1005,max:1025,def:1015},
+    {k:'al',l:'Albumin (0-5)',min:0,max:5,def:0},
+    {k:'su',l:'Sugar (0-5)',min:0,max:5,def:0},
+    {k:'rbc',l:'RBC (0=normal)',min:0,max:1,def:0},
+    {k:'pc',l:'Pus Cells (0=normal)',min:0,max:1,def:0},
+    {k:'bgr',l:'Blood Glucose',min:22,max:490,def:138},
+    {k:'bu',l:'Blood Urea',min:1,max:391,def:57},
+    {k:'sc',l:'Serum Creatinine ×10',min:4,max:760,def:19},
+    {k:'hemo',l:'Haemoglobin ×10',min:31,max:178,def:125},
+    {k:'htn',l:'Hypertension (0/1)',min:0,max:1,def:0},
+    {k:'dm',l:'Diabetes (0/1)',min:0,max:1,def:0},
+  ],
+};
+
+function renderPrediction(el){
+  const disease = el.dataset.disease || 'Diabetes';
+  const fields = DISEASE_FIELDS[disease];
+  el.innerHTML=`
+    <h2>🔬 AI Disease Prediction</h2>
+    <div class="field" style="max-width:280px">
+      <label>Select Disease</label>
+      <select id="disease-sel" onchange="changeDiseaseEl(this.value)">
+        ${Object.keys(DISEASE_FIELDS).map(d=>`<option${d===disease?' selected':''}>${d}</option>`).join('')}
+      </select>
+    </div>
+    <div class="card">
+      <h3>📝 Patient Inputs — ${disease}</h3>
+      <div class="g3" id="pred-fields">
+        ${fields.map(f=>`
+          <div class="field">
+            <label>${f.l}</label>
+            <input type="number" id="pf_${f.k}" min="${f.min}" max="${f.max}" value="${f.def}" step="${f.step||1}"/>
+          </div>
+        `).join('')}
+      </div>
+      <button class="btn mt-1" id="pred-btn" onclick="runPrediction('${disease}')">🚀 Run AI Prediction</button>
+    </div>
+    <div id="pred-result"></div>
+    <div class="card mt-1">
+      <h3>📊 How AI Scoring Works</h3>
+      <p class="text-muted" style="font-size:.85rem;line-height:1.7">
+        The AI analyses your inputs against clinical thresholds and computes a <strong style="color:var(--accent)">risk score</strong>.
+        Scores &gt; 65% = High Risk 🔴, 35–65% = Medium Risk 🟡, &lt; 35% = Low Risk 🟢.
+        Results are AI-assisted and should always be confirmed by a licensed physician.
+      </p>
+    </div>
+  `;
+}
+
+function changeDiseaseEl(val){
+  const el = document.getElementById('pane-prediction');
+  el.dataset.disease = val;
+  renderPrediction(el);
+}
+
+async function runPrediction(disease){
+  const btn = document.getElementById('pred-btn');
+  btn.innerHTML='<span class="spinner"></span> Analysing…';
+  btn.disabled=true;
+
+  // Collect fields
+  const fields = DISEASE_FIELDS[disease];
+  const vals = {};
+  fields.forEach(f=>{ vals[f.k]=parseFloat(document.getElementById('pf_'+f.k).value)||0; });
+
+  // Build prompt for Anthropic API
+  const prompt = `You are a medical AI assistant. Analyse these patient parameters for ${disease} risk prediction.
+
+Parameters: ${JSON.stringify(vals)}
+
+Based on clinical knowledge of ${disease}:
+1. Assign a risk probability (0.0 to 1.0) based on clinical thresholds
+2. Give prediction: Positive or Negative
+3. List 3-4 specific medical recommendations
+
+Respond ONLY in this JSON format (no extra text):
+{"probability":0.73,"prediction":"Positive","risk":"High","recommendations":["rec1","rec2","rec3"]}
+
+Rules:
+- Diabetes: glucose>140, BMI>30, age>40 increase risk
+- Heart Disease: chol>240, trestbps>140, age>50+male increase risk  
+- Kidney Disease: sc>2.5, bu>100, htn=1 increase risk
+- risk: "High" if prob>0.65, "Medium" if 0.35-0.65, "Low" if <0.35`;
+
+  let label, prob, risk, recs;
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:400,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data = await resp.json();
+    const text = data.content.map(c=>c.text||'').join('');
+    const clean = text.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(clean);
+    label = parsed.prediction;
+    prob = Math.max(0, Math.min(1, parsed.probability));
+    risk = parsed.risk;
+    recs = parsed.recommendations;
+  } catch(e) {
+    // Fallback: rule-based scoring
+    const r = ruleBasedScore(disease, vals);
+    label=r.label; prob=r.prob; risk=r.risk; recs=r.recs;
+  }
+
+  // Save prediction
+  const pred = {
+    id: newId('PRED',state.predictions),
+    patientId: 'MANUAL',
+    disease, label, prob: prob.toFixed(4),
+    timestamp: now(),
+  };
+  state.predictions.push(pred);
+  save();
+
+  // Show result
+  const color = label==='Positive'?'var(--danger)':'var(--accent2)';
+  const icon  = label==='Positive'?'🔴':'🟢';
+  const alertClass = `alert-${risk.toLowerCase()}`;
+  document.getElementById('pred-result').innerHTML=`
+    <div class="g2 mt-1">
+      <div class="card" style="text-align:center;border-color:${color}">
+        <div style="font-size:3rem">${icon}</div>
+        <div style="font-size:1.5rem;font-weight:800;color:${color}">${label}</div>
+        <div class="text-muted" style="margin:.3rem 0">${disease} Prediction</div>
+        <div>Confidence: <strong style="color:${color}">${(prob*100).toFixed(1)}%</strong></div>
+        <div style="margin-top:.5rem">
+          <div style="background:var(--input);border-radius:6px;height:12px;overflow:hidden">
+            <div style="height:100%;width:${(prob*100).toFixed(1)}%;background:${color};border-radius:6px"></div>
+          </div>
+        </div>
+        <div class="text-muted mt-1" style="font-size:.78rem">AI-powered clinical analysis</div>
+      </div>
+      <div class="card">
+        <h3>💊 AI Recommendations</h3>
+        ${(recs||[]).map(r=>`<div class="${alertClass}" style="margin:.35rem 0">${r}</div>`).join('')}
+      </div>
+    </div>
+  `;
+
+  btn.innerHTML='🚀 Run AI Prediction';
+  btn.disabled=false;
+  updateSidebarStats();
+}
+
+// Rule-based fallback
+function ruleBasedScore(disease, vals){
+  let score = 0;
+  if(disease==='Diabetes'){
+    if(vals.Glucose>140) score+=.3;
+    if(vals.BMI>30) score+=.2;
+    if(vals.Age>40) score+=.1;
+    if(vals.Insulin>200) score+=.1;
+    if(vals.DiabetesPedigreeFunction>1) score+=.1;
+    if(vals.Pregnancies>5) score+=.05;
+  } else if(disease==='Heart Disease'){
+    if(vals.chol>240) score+=.25;
+    if(vals.trestbps>140) score+=.2;
+    if(vals.age>50&&vals.sex===1) score+=.2;
+    if(vals.cp>1) score+=.15;
+    if(vals.exang===1) score+=.1;
+    if(vals.ca>0) score+=.1;
+  } else {
+    if(vals.sc>19) score+=.3;
+    if(vals.bu>57) score+=.2;
+    if(vals.htn===1) score+=.2;
+    if(vals.dm===1) score+=.15;
+    if(vals.al>0) score+=.1;
+  }
+  const prob = Math.min(0.95, score);
+  const risk = prob>0.65?'High':prob>0.35?'Medium':'Low';
+  const recs = getRecs(disease, prob>0.5?'Positive':'Negative', risk, vals);
+  return {label:prob>0.5?'Positive':'Negative', prob, risk, recs};
+}
+
+function getRecs(disease, label, risk, vals){
+  if(label==='Negative') return ['✅ No disease detected. Maintain a healthy lifestyle.','📅 Schedule annual check-up.'];
+  const r=[];
+  if(risk==='High') r.push('🚨 HIGH RISK — Immediate medical attention required!');
+  if(disease==='Diabetes'){
+    if((vals.Glucose||0)>140) r.push('🩸 High glucose — consult endocrinologist.');
+    if((vals.BMI||0)>30) r.push('⚖️ Elevated BMI — diet & exercise plan recommended.');
+    r.push('💊 HbA1c test recommended within 2 weeks.');
+  } else if(disease==='Heart Disease'){
+    r.push('❤️ Cardiology consultation strongly recommended.');
+    if((vals.chol||0)>240) r.push('📉 High cholesterol — lipid panel & statin review advised.');
+    r.push('🩺 ECG and stress test advised.');
+  } else {
+    r.push('🫘 Nephrology referral recommended.');
+    r.push('💧 Increase water intake to ≥ 2 L/day.');
+    r.push('🧂 Reduce sodium intake.');
+  }
+  return r;
+}
+
+// ═══════════════════════════════════════
+// PANE: PATIENTS
+// ═══════════════════════════════════════
+function renderPatients(el){
+  const q = el.dataset.q||'';
+  const sf = el.dataset.sf||'All';
+  const rf = el.dataset.rf||'All';
+
+  let rows = state.patients.filter(p=>{
+    const ms = sf==='All'||p.status===sf;
+    const mr = rf==='All'||p.risk===rf;
+    const qq = q.toLowerCase();
+    const mq = !q
+      || p.name.toLowerCase().includes(qq)
+      || p.id.toLowerCase().includes(qq)
+      || (p.diagnosis||'').toLowerCase().includes(qq)
+      || (p.doctor||'').toLowerCase().includes(qq)
+      || (p.status||'').toLowerCase().includes(qq)
+      || (p.risk||'').toLowerCase().includes(qq)
+      || (p.bedType||'').toLowerCase().includes(qq);
+    return ms&&mr&&mq;
+  });
+
+  el.innerHTML=`
+    <h2>👥 Patient Records</h2>
+    <div class="g3 mb-1">
+      <div class="field">
+        <label>Filter by Status</label>
+        <select onchange="filterPatients('sf',this.value)">
+          ${['All','Admitted','Discharged','Critical','Stable'].map(s=>`<option${s===sf?' selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field">
+        <label>Filter by Risk</label>
+        <select onchange="filterPatients('rf',this.value)">
+          ${['All','High','Medium','Low'].map(r=>`<option${r===rf?' selected':''}>${r}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field">
+        <label>🔍 Search</label>
+        <input placeholder="Name, ID, diagnosis, doctor, status…" value="${q}" oninput="filterPatients('q',this.value)"/>
+      </div>
+    </div>
+    <div class="text-muted mb-05" style="font-size:.82rem">Showing <strong>${rows.length}</strong> of <strong>${state.patients.length}</strong> records</div>
+    <button class="btn btn-outline btn-sm mb-1" style="width:auto" onclick="exportPatientsCSV()">📥 Export Patients CSV</button>
+    <div class="tbl-wrap mb-1">
+      <table class="tbl">
+        <thead><tr>
+          <th>ID</th><th>Name</th><th>Age</th><th>Gender</th><th>Diagnosis</th>
+          <th>Bed</th><th>Status</th><th>Risk</th><th>Doctor</th><th>Actions</th>
+        </tr></thead>
+        <tbody>
+          ${rows.length ? rows.map(p=>`
+            <tr>
+              <td class="text-accent">${p.id}</td>
+              <td>${p.name}</td><td>${p.age}</td><td>${p.gender}</td>
+              <td>${p.diagnosis||'—'}</td><td>${p.bedType}</td>
+              <td><span class="chip chip-${p.status.toLowerCase()}">${p.status}</span></td>
+              <td><span class="chip chip-${p.risk.toLowerCase()}">${p.risk}</span></td>
+              <td>${p.doctor}</td>
+              <td>
+                ${p.status==='Admitted'?`<button class="btn btn-success btn-sm" onclick="dischargePatient('${p.id}')">Discharge</button>`:''}
+              </td>
+            </tr>
+          `).join('') : '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:2rem">No patients found</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+    <hr/>
+    <h3>➕ Admit New Patient</h3>
+    <div class="card">
+      <div class="g2">
+        <div class="field"><label>Full Name *</label><input id="np_name" placeholder="Patient full name"/></div>
+        <div class="field"><label>Age</label><input type="number" id="np_age" value="30" min="0" max="120"/></div>
+        <div class="field"><label>Gender</label><select id="np_gen"><option>Male</option><option>Female</option><option>Other</option></select></div>
+        <div class="field"><label>Blood Group</label><select id="np_bg">${['A+','A-','B+','B-','O+','O-','AB+','AB-'].map(b=>`<option>${b}</option>`).join('')}</select></div>
+        <div class="field"><label>Phone</label><input id="np_ph" placeholder="+91 XXXXX XXXXX"/></div>
+        <div class="field"><label>Diagnosis</label><input id="np_diag" placeholder="e.g. Diabetes Type 2"/></div>
+        <div class="field"><label>Bed Type</label><select id="np_bt"><option>General</option><option>Emergency</option><option>ICU</option></select></div>
+        <div class="field"><label>Doctor</label><select id="np_doc">${['Dr. Sharma','Dr. Patel','Dr. Nair','Dr. Iyer','Dr. Reddy'].map(d=>`<option>${d}</option>`).join('')}</select></div>
+        <div class="field"><label>Risk Level</label><select id="np_risk"><option>Low</option><option>Medium</option><option>High</option></select></div>
+      </div>
+      <button class="btn btn-success mt-1" style="max-width:220px" onclick="admitPatient()">✅ Confirm Admission</button>
+    </div>
+  `;
+}
+
+function filterPatients(key, val){
+  const el = document.getElementById('pane-patients');
+  el.dataset[key] = val;
+  renderPatients(el);
+}
+
+function admitPatient(){
+  const name = document.getElementById('np_name').value.trim();
+  if(!name){ toast('Name is required','error'); return; }
+  const bedType = document.getElementById('np_bt').value;
+  const beds = getBeds();
+  if(beds[bedType].avail<=0){ toast(`No beds in ${bedType}!`,'error'); return; }
+  const p = {
+    id: newId('P',state.patients),
+    name, age: document.getElementById('np_age').value,
+    gender: document.getElementById('np_gen').value,
+    bloodGroup: document.getElementById('np_bg').value,
+    phone: document.getElementById('np_ph').value,
+    diagnosis: document.getElementById('np_diag').value,
+    bedType, status:'Admitted',
+    doctor: document.getElementById('np_doc').value,
+    risk: document.getElementById('np_risk').value,
+    admitted: now(),
+  };
+  state.patients.push(p);
+  save();
+  toast(`✅ Patient admitted — ID: ${p.id}`, 'success');
+  renderPatients(document.getElementById('pane-patients'));
+  updateSidebarStats();
+}
+
+function dischargePatient(id){
+  const p = state.patients.find(x=>x.id===id);
+  if(p){ p.status='Discharged'; save(); toast('Patient discharged','success'); renderPatients(document.getElementById('pane-patients')); updateSidebarStats(); }
+}
+
+// ═══════════════════════════════════════
+// PANE: BEDS
+// ═══════════════════════════════════════
+function renderBeds(el){
+  const beds = getBeds();
+  el.innerHTML=`
+    <h2>🛏️ Bed Management Centre</h2>
+    <div class="tbl-wrap mb-1">
+      <table class="tbl">
+        <thead><tr><th>Bed Type</th><th>Capacity</th><th>Occupied</th><th>Available</th><th>Occupancy %</th><th>Status</th></tr></thead>
+        <tbody>
+          ${Object.entries(beds).map(([k,d])=>{
+            const st = d.pct>=80?'🔴 Critical':d.pct>=50?'🟡 Moderate':'🟢 Normal';
+            return `<tr><td><strong>${k}</strong></td><td>${d.cap}</td><td>${d.occ}</td>
+              <td style="color:var(--accent2)">${d.avail}</td>
+              <td>${d.pct}%</td><td>${st}</td></tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <h3>Occupancy Rate (%)</h3>
+        <div style="position:relative;height:240px">
+          <canvas id="bedChart" role="img" aria-label="Bed occupancy bar chart">
+            ${Object.entries(beds).map(([k,d])=>k+': '+d.pct+'%').join(', ')}
+          </canvas>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Available vs Occupied</h3>
+        <div style="position:relative;height:240px">
+          <canvas id="bedChart2" role="img" aria-label="Stacked bed availability chart">
+            ${Object.entries(beds).map(([k,d])=>k+' - Occupied: '+d.occ+', Available: '+d.avail).join('; ')}
+          </canvas>
+        </div>
+      </div>
+    </div>
+  `;
+  setTimeout(()=>{
+    destroyChart('bedChart'); destroyChart('bedChart2');
+    const labels = Object.keys(beds);
+    const pcts = Object.values(beds).map(d=>d.pct);
+    const colors = pcts.map(p=>p>=80?'#F76C6C':p>=50?'#F5A623':'#43C59E');
+    state.charts['bedChart'] = new Chart(document.getElementById('bedChart'),{
+      type:'bar',
+      data:{labels,datasets:[{data:pcts,backgroundColor:colors}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{x:{ticks:{color:'#7C9286'}},y:{ticks:{color:'#7C9286',callback:v=>v+'%'},grid:{color:'#DFEEE6'},max:100}}}
+    });
+    state.charts['bedChart2'] = new Chart(document.getElementById('bedChart2'),{
+      type:'bar',
+      data:{labels,datasets:[
+        {label:'Occupied',data:Object.values(beds).map(d=>d.occ),backgroundColor:'#F76C6C'},
+        {label:'Available',data:Object.values(beds).map(d=>d.avail),backgroundColor:'#43C59E'},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        scales:{x:{stacked:true,ticks:{color:'#7C9286'}},y:{stacked:true,ticks:{color:'#7C9286'},grid:{color:'#DFEEE6'}}},
+        plugins:{legend:{labels:{color:'#16261E',font:{size:11}}}}}
+    });
+  },50);
+}
+
+// ═══════════════════════════════════════
+// PANE: ANALYTICS
+// ═══════════════════════════════════════
+function renderAnalytics(el){
+  const ages = state.patients.map(p=>parseInt(p.age)).filter(Boolean);
+  const ageGroups={'0-20':0,'21-40':0,'41-60':0,'61-80':0,'81+':0};
+  ages.forEach(a=>{
+    if(a<=20) ageGroups['0-20']++;
+    else if(a<=40) ageGroups['21-40']++;
+    else if(a<=60) ageGroups['41-60']++;
+    else if(a<=80) ageGroups['61-80']++;
+    else ageGroups['81+']++;
+  });
+  const docCount={};
+  state.patients.forEach(p=>{ if(p.doctor) docCount[p.doctor]=(docCount[p.doctor]||0)+1; });
+  const disCount={};
+  state.predictions.forEach(p=>{ if(p.disease) disCount[p.disease]=(disCount[p.disease]||0)+1; });
+  const posNeg={Positive:0,Negative:0};
+  state.predictions.forEach(p=>{ if(p.label) posNeg[p.label]++; });
+
+  el.innerHTML=`
+    <h2>📈 Hospital Analytics</h2>
+    ${state.patients.length===0?'<div class="alert-info">No patient data yet. Admit patients to see analytics.</div>':''}
+    <div class="g2">
+      <div class="card">
+        <h3>Age Distribution</h3>
+        <div style="position:relative;height:220px"><canvas id="ageChart" role="img" aria-label="Age distribution bar chart">${Object.entries(ageGroups).map(([k,v])=>k+': '+v).join(', ')}</canvas></div>
+      </div>
+      <div class="card">
+        <h3>Doctor Workload</h3>
+        <div style="position:relative;height:220px"><canvas id="docChart" role="img" aria-label="Doctor patient load chart">${Object.entries(docCount).map(([k,v])=>k+': '+v).join(', ')||'No data'}</canvas></div>
+      </div>
+    </div>
+    ${state.predictions.length?`
+    <hr/>
+    <h3>🔬 Prediction Analytics</h3>
+    <div class="g2">
+      <div class="card">
+        <h3>Predictions by Disease</h3>
+        <div style="position:relative;height:220px"><canvas id="disChart" role="img" aria-label="Predictions by disease chart">${Object.entries(disCount).map(([k,v])=>k+': '+v).join(', ')}</canvas></div>
+      </div>
+      <div class="card">
+        <h3>Positive vs Negative</h3>
+        <div style="position:relative;height:220px"><canvas id="pnChart" role="img" aria-label="Positive vs negative outcomes chart">Positive: ${posNeg.Positive}, Negative: ${posNeg.Negative}</canvas></div>
+      </div>
+    </div>`:''}
+  `;
+  setTimeout(()=>{
+    destroyChart('ageChart');
+    state.charts['ageChart'] = new Chart(document.getElementById('ageChart'),{
+      type:'bar',data:{labels:Object.keys(ageGroups),datasets:[{data:Object.values(ageGroups),backgroundColor:'#1B7F4C'}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{x:{ticks:{color:'#7C9286'}},y:{ticks:{color:'#7C9286'},grid:{color:'#DFEEE6'}}}}
+    });
+    destroyChart('docChart');
+    if(Object.keys(docCount).length){
+      state.charts['docChart'] = new Chart(document.getElementById('docChart'),{
+        type:'bar',data:{labels:Object.keys(docCount),datasets:[{data:Object.values(docCount),backgroundColor:'#43C59E'}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+          scales:{x:{ticks:{color:'#7C9286',maxRotation:30}},y:{ticks:{color:'#7C9286'},grid:{color:'#DFEEE6'}}}}
+      });
+    }
+    if(state.predictions.length){
+      destroyChart('disChart');
+      state.charts['disChart'] = new Chart(document.getElementById('disChart'),{
+        type:'bar',data:{labels:Object.keys(disCount),datasets:[{data:Object.values(disCount),backgroundColor:['#1B7F4C','#D6473E','#54B488']}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+          scales:{x:{ticks:{color:'#7C9286'}},y:{ticks:{color:'#7C9286'},grid:{color:'#DFEEE6'}}}}
+      });
+      destroyChart('pnChart');
+      state.charts['pnChart'] = new Chart(document.getElementById('pnChart'),{
+        type:'doughnut',
+        data:{labels:['Positive','Negative'],datasets:[{data:[posNeg.Positive,posNeg.Negative],backgroundColor:['#D6473E','#54B488'],borderColor:'#FFFFFF',borderWidth:2}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#16261E'}}}}
+      });
+    }
+  },50);
+}
+
+// ═══════════════════════════════════════
+// PANE: HISTORY
+// ═══════════════════════════════════════
+function renderHistory(el){
+  el.innerHTML=`
+    <h2>📋 Prediction History</h2>
+    ${state.predictions.length===0?'<div class="alert-info">No predictions yet. Run a prediction in the Prediction tab.</div>':''}
+    ${state.predictions.length?`
+    <div class="text-muted mb-05" style="font-size:.82rem"><strong>${state.predictions.length}</strong> predictions recorded</div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>ID</th><th>Patient</th><th>Disease</th><th>Result</th><th>Confidence</th><th>Time</th></tr></thead>
+        <tbody>
+          ${[...state.predictions].reverse().map(p=>{
+            const prob = parseFloat(p.prob);
+            const color = prob>0.65?'var(--danger)':prob>0.35?'var(--warn)':'var(--accent2)';
+            return `<tr>
+              <td class="text-accent">${p.id}</td>
+              <td>${p.patientId}</td>
+              <td>${p.disease}</td>
+              <td><span class="chip ${p.label==='Positive'?'chip-high':'chip-low'}">${p.label}</span></td>
+              <td style="color:${color};font-weight:700">${(prob*100).toFixed(1)}%</td>
+              <td class="text-muted">${p.timestamp}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+    <button class="btn btn-outline btn-sm mt-1" onclick="exportCSV()">📥 Export CSV</button>
+    `:''}
+  `;
+}
+
+function exportCSV(){
+  const rows = [['ID','Patient','Disease','Result','Confidence','Time']];
+  state.predictions.forEach(p=>rows.push([p.id,p.patientId,p.disease,p.label,(parseFloat(p.prob)*100).toFixed(1)+'%',p.timestamp]));
+  const csv = rows.map(r=>r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download = 'predictions_export.csv';
+  a.click();
+  toast('CSV exported','success');
+}
+
+function exportPatientsCSV(){
+  const rows = [['ID','Name','Age','Gender','Blood Group','Diagnosis','Bed','Status','Risk','Doctor','Admission Date']];
+  state.patients.forEach(p=>rows.push([p.id,p.name,p.age,p.gender,p.bloodGroup||'',p.diagnosis||'',p.bedType,p.status,p.risk,p.doctor,p.admissionDate||p.createdAt||'']));
+  const csv = rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download = 'patients_export.csv';
+  a.click();
+  toast('Patient records exported','success');
+}
+
+// ═══════════════════════════════════════
+// PANE: CHATBOT (AI powered)
+// ═══════════════════════════════════════
+const KB = {
+  diabetes:'Diabetes is a chronic condition affecting blood sugar. Key risk factors: obesity, family history, inactivity. Management: medication (metformin), diet control, exercise, and blood sugar monitoring.',
+  heart:'Heart disease includes CAD, arrhythmia, and heart failure. Risk factors: high BP, high cholesterol, smoking. Prevention: healthy diet, exercise, no smoking.',
+  kidney:'Kidney disease affects waste filtration. Causes: diabetes, hypertension. Symptoms: swelling, fatigue, reduced urine output. Early detection via creatinine & eGFR tests.',
+  symptoms:'⚠️ Common warning signs: unexplained fatigue, chest pain, frequent urination, limb swelling, shortness of breath. Consult a doctor immediately.',
+  bed:'Bed availability is updated in real-time. ICU: critical. Emergency: urgent. General: routine. Check the Beds tab for live counts.',
+  diet:'🥗 Healthy diet: reduce sugar & sodium, increase fruits & vegetables, stay hydrated (≥8 glasses/day), limit processed foods.',
+  emergency:'🚨 For emergencies call 104 (National Medical Helpline). Go to Emergency immediately for chest pain, difficulty breathing, or stroke symptoms.',
+  'blood pressure':'Normal BP: 120/80 mmHg. High BP (>140/90) increases risk of heart disease and stroke. Monitor regularly.',
+  bmi:'BMI < 18.5: Underweight | 18.5–24.9: Normal | 25–29.9: Overweight | ≥30: Obese.',
+  hello:"Hello! 👋 I'm MedBot — your AI assistant. Ask about diseases, symptoms, diet, or bed availability.",
+};
+
+function renderChatbot(el){
+  el.innerHTML=`
+    <h2>🤖 MedBot — AI Medical Assistant</h2>
+    <div class="card">
+      <div class="chat-box" id="chat-msgs">
+        ${state.chatHistory.map(m=>`<div class="${m.role==='user'?'chat-user':'chat-bot'}">${m.role==='user'?'🧑':'🤖'} ${m.msg}</div>`).join('')}
+      </div>
+      <div style="display:flex;gap:.6rem">
+        <input id="chat-in" placeholder="Ask MedBot anything…" style="flex:1" 
+          onkeydown="if(event.key==='Enter')sendChat()"/>
+        <button class="btn" style="width:90px" onclick="sendChat()">Send ➤</button>
+      </div>
+      <div style="margin-top:.6rem;text-align:right">
+        <button class="btn btn-outline btn-sm" onclick="clearChat()">🗑️ Clear Chat</button>
+      </div>
+    </div>
+    <div class="card mt-1">
+      <div class="text-muted" style="font-size:.82rem">💡 Try asking: <em>What are symptoms of diabetes? | How to reduce heart risk? | Are beds available? | What is kidney disease?</em></div>
+    </div>
+  `;
+  scrollChat();
+}
+
+function scrollChat(){
+  const box = document.getElementById('chat-msgs');
+  if(box) box.scrollTop = box.scrollHeight;
+}
+
+async function sendChat(){
+  const inp = document.getElementById('chat-in');
+  const msg = inp.value.trim();
+  if(!msg) return;
+  inp.value='';
+
+  state.chatHistory.push({role:'user',msg});
+  renderChatbot(document.getElementById('pane-chatbot'));
+
+  // Quick KB lookup
+  const text = msg.toLowerCase();
+  let reply = null;
+  for(const [k,r] of Object.entries(KB)){
+    if(text.includes(k)){ reply=r; break; }
+  }
+
+  if(!reply){
+    // Show typing indicator while AI responds
+    const box = document.getElementById('chat-msgs');
+    if(box){
+      const typingEl = document.createElement('div');
+      typingEl.className='chat-bot';
+      typingEl.id='typing-indicator';
+      typingEl.innerHTML='🤖 <span class="spinner" style="width:12px;height:12px;vertical-align:middle"></span> MedBot is typing…';
+      box.appendChild(typingEl);
+      box.scrollTop = box.scrollHeight;
+    }
+    // Try Anthropic API
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          model:'claude-sonnet-4-20250514',
+          max_tokens:250,
+          messages:[
+            {role:'user',content:`You are MedBot, a helpful hospital AI assistant. Answer briefly and clearly in 2-3 sentences. User question: ${msg}`}
+          ]
+        })
+      });
+      const data = await resp.json();
+      reply = data.content.map(c=>c.text||'').join('').trim();
+    } catch(e) {
+      reply = "I'm not sure about that. Please consult our medical staff or ask about: diabetes, heart disease, kidney disease, symptoms, or bed availability.";
+    }
+  }
+
+  state.chatHistory.push({role:'bot',msg:reply});
+  renderChatbot(document.getElementById('pane-chatbot'));
+}
+
+function clearChat(){
+  state.chatHistory = [{role:'bot',msg:"Hello! 👋 I'm MedBot — your AI medical assistant."}];
+  renderChatbot(document.getElementById('pane-chatbot'));
+}
+
+// ═══════════════════════════════════════
+// PANE: DATABASE
+// ═══════════════════════════════════════
+function renderDatabase(el){
+  el.innerHTML=`
+    <h2>🗄️ Database Schema (MySQL)</h2>
+    <p class="text-muted mb-1" style="font-size:.85rem">Complete SQL schema for production MySQL setup.</p>
+    <div class="card" style="background:var(--input)">
+      <pre style="font-size:.75rem;color:#16261E;overflow-x:auto;white-space:pre-wrap;line-height:1.6">${SQL_SCHEMA}</pre>
+    </div>
+    <button class="btn btn-outline btn-sm mt-1" onclick="downloadSQL()">📥 Download SQL Schema</button>
+    <hr/>
+    <h3>📊 ERD Overview</h3>
+    <div class="card">
+      <pre style="font-size:.82rem;color:var(--muted);line-height:1.8">
+  doctors ──┐
+            ├──→ admissions ←── beds
+  patients ─┘         ↑
+       ↓               └── (room link)
+  predictions (disease AI results)
+  users (auth/login)</pre>
+    </div>
+  `;
+}
+
+const SQL_SCHEMA = `CREATE DATABASE IF NOT EXISTS hospital_db;
+USE hospital_db;
+
+CREATE TABLE IF NOT EXISTS doctors (
+    doctor_id   INT AUTO_INCREMENT PRIMARY KEY,
+    name        VARCHAR(100) NOT NULL,
+    speciality  VARCHAR(100),
+    phone       VARCHAR(15),
+    email       VARCHAR(100) UNIQUE,
+    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS patients (
+    patient_id    VARCHAR(10) PRIMARY KEY,
+    name          VARCHAR(100) NOT NULL,
+    age           INT,
+    gender        ENUM('Male','Female','Other'),
+    blood_group   VARCHAR(5),
+    diagnosis     VARCHAR(200),
+    bed_type      ENUM('ICU','Emergency','General'),
+    admission_date DATETIME,
+    status        ENUM('Admitted','Discharged','Critical','Stable') DEFAULT 'Admitted',
+    doctor_id     INT,
+    risk_level    ENUM('Low','Medium','High') DEFAULT 'Low',
+    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (doctor_id) REFERENCES doctors(doctor_id)
+);
+
+CREATE TABLE IF NOT EXISTS predictions (
+    pred_id     VARCHAR(15) PRIMARY KEY,
+    patient_id  VARCHAR(10),
+    disease     ENUM('Diabetes','Heart Disease','Kidney Disease'),
+    model_used  VARCHAR(50),
+    prediction  ENUM('Positive','Negative'),
+    probability DECIMAL(6,4),
+    timestamp   DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES patients(patient_id)
+);
+
+CREATE TABLE IF NOT EXISTS users (
+    user_id    INT AUTO_INCREMENT PRIMARY KEY,
+    username   VARCHAR(50) UNIQUE NOT NULL,
+    password   VARCHAR(64) NOT NULL,
+    role       ENUM('admin','doctor','nurse') DEFAULT 'nurse',
+    full_name  VARCHAR(100),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT IGNORE INTO users (username, password, role, full_name) VALUES
+  ('arjun', SHA2('670798', 256),    'doctor', 'Dr. Arjun'),
+  ('admin', SHA2('admin1234', 256), 'admin',  'Dr. Admin'),
+  ('nurse', SHA2('nurse123', 256),  'nurse',  'Nurse Priya');`;
+
+function downloadSQL(){
+  const a = document.createElement('a');
+  a.href = 'data:text/plain;charset=utf-8,'+encodeURIComponent(SQL_SCHEMA);
+  a.download = 'hospital_schema.sql';
+  a.click();
+}
+</script>
+</body>
+</html>
